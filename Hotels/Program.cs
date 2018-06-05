@@ -5,8 +5,10 @@ using System.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
+using ILogger = Serilog.ILogger;
 
 namespace Hotels
 {
@@ -23,17 +25,9 @@ namespace Hotels
                 })
                 .ConfigureLogging((context, logging) =>
                 {
-                    var elasticSearchOptions = new ElasticsearchSinkOptions(new Uri(context.Configuration["elasticSearchEndpoint"]));
+                    var loggerFactory = new LoggerFactory(context.Configuration);
 
-                    Log.Logger = new LoggerConfiguration()
-                        .MinimumLevel.Information()
-                        .Enrich.FromLogContext()
-                        .Enrich.WithProperty("Facility", "HotelsSample")
-                        .Enrich.WithProperty("InstanceId", Amazon.Util.EC2InstanceMetadata.InstanceId)
-                        .WriteTo.Elasticsearch(elasticSearchOptions)
-                        .WriteTo.Console()
-                        .WriteTo.Udp(IPAddress.Loopback, 7071, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}{NewLine}{Properties}")
-                        .CreateLogger();
+                    Log.Logger = loggerFactory.Build();
 
                     logging.AddSerilog();
                 })
